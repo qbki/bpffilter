@@ -1,0 +1,13 @@
+---
+Checks: >
+  clang-diagnostic-*,
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  -cppcoreguidelines-pro-type-union-access,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  misc-header-include-cycle
+WarningsAsErrors: true
+HeaderFilterRegex: ''
+AnalyzeTemporaryDtors: false
+FormatStyle: mozilla
