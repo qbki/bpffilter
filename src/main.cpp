@@ -1,5 +1,7 @@
 #include <array>
 #include <bpf/bpf.h>
+#include <thread>
+#include <chrono>
 #include <bpf/libbpf.h>
 #include <csignal>
 #include <fcntl.h>
@@ -14,25 +16,16 @@
 
 #include "main.skel.h"
 #include "utils.hxx"
+#include "common.h"
 
-const int EBPF_BUFFER_SIZE = 1024;
+const std::chrono::seconds SLEEP_INTERVAL {1};
 static volatile sig_atomic_t IS_RUNNING = 1; // NOLINT
 
-void read_trace_pipe()
-{
-  auto trace_fd = open("/sys/kernel/debug/tracing/trace_pipe", O_RDONLY, 0);
-  if (trace_fd < 0) {
-    return;
-  }
-  while (IS_RUNNING) {
-    static std::array<char, EBPF_BUFFER_SIZE> buffer;
-    auto size = read(trace_fd, buffer.data(), EBPF_BUFFER_SIZE - 1);
-    if (size > 0) {
-      buffer[size] = 0; // NOLINT
-      puts(buffer.data());
-    }
-  }
-}
+using BpfProgramPtr = std::unique_ptr<main_bpf, std::function<void(main_bpf*)>>;
+using XdpProgramPtr = std::unique_ptr<xdp_program, std::function<void(xdp_program*)>>;
+struct BpfFileDescriptor {
+  int descriptor;
+};
 
 void bpf_deleter(main_bpf* bpf_ptr) {
   main_bpf::destroy(bpf_ptr);
@@ -49,8 +42,40 @@ void finish_application(int) {
   IS_RUNNING = 0;
 }
 
-using BpfProgramPtr = std::unique_ptr<main_bpf, std::function<void(main_bpf*)>>;
-using XdpProgramPtr = std::unique_ptr<xdp_program, std::function<void(xdp_program*)>>;
+/**
+ * Returns a BPF file descriptor based on a map name.
+ */
+BpfFileDescriptor find_map_fd(bpf_object *bpf_obj, const std::string& map_name)
+{
+	auto map = bpf_object__find_map_by_name(bpf_obj, map_name.c_str());
+  if (!map) {
+    throw std::runtime_error(std::format("Can't find a map by name: {}", map_name));
+	}
+	auto file_descriptor = bpf_map__fd(map);
+  if (file_descriptor < 0) {
+    throw std::runtime_error(std::format("Can't get a file descriptor of a map: {}", map_name));
+  }
+  return { file_descriptor };
+}
+
+InterfaceData get_kernel_value(BpfFileDescriptor fd, __u32 key)
+{
+  InterfaceData result {};
+  auto error = bpf_map_lookup_elem(fd.descriptor, &key, &result);
+	if (error != 0) {
+    throw std::runtime_error(std::format("Can't map data from the kernel program: {}", key));
+	}
+  return result;
+}
+
+void run_polling(XdpProgramPtr& program) {
+  auto map_df = find_map_fd(xdp_program__bpf_obj(program.get()), "xdp_stats_map");
+  while (IS_RUNNING) {
+    auto value = get_kernel_value(map_df, KEY);
+    print(std::format("Packets: {}", value.received_packets));
+    std::this_thread::sleep_for(SLEEP_INTERVAL);
+  }
+}
 
 int main()
 {
@@ -59,23 +84,23 @@ int main()
   try {
     long error = 0;
 
-    BpfProgramPtr obj {main_bpf::open(), bpf_deleter};
-    if (!obj) {
+    BpfProgramPtr bpf_program {main_bpf::open(), bpf_deleter};
+    if (!bpf_program) {
       throw std::runtime_error("Can't open eBPF program");
     }
 
-    XdpProgramPtr xdp {xdp_program__from_bpf_obj(obj->obj, "xdp"), xdp_deleter};
-    error = libxdp_get_error(xdp.get());
+    XdpProgramPtr xdp_program {xdp_program__from_bpf_obj(bpf_program->obj, "xdp"), xdp_deleter};
+    error = libxdp_get_error(xdp_program.get());
     if (error) {
       throw std::runtime_error("Can't create XDP program");
     }
 
-    error = xdp_program__attach(xdp.get(), 1, XDP_MODE_UNSPEC, 0);
+    error = xdp_program__attach(xdp_program.get(), 1 /*lo or localhost*/, XDP_MODE_UNSPEC, 0);
     if (error) {
       throw std::runtime_error(std::format("Can't attach XDP program to interface. Err code: {}", error));
     }
 
-    read_trace_pipe();
+    run_polling(xdp_program);
   } catch(std::runtime_error& exception) {
     print_err(exception.what());
   }

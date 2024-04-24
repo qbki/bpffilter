@@ -6,4 +6,4 @@ CompileFlags:
 If:
   PathMatch: .*\.c
 CompileFlags:
-  Add: [-std=c17]
+  Add: []
