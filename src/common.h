@@ -7,6 +7,7 @@
 //         ^real type             ^goes to comment
 struct InterfaceData {
 	long long unsigned int received_packets; // __u64
+	long long unsigned int received_bytes; // __u64
 };
 
 const unsigned int KEY = 0; // __u32

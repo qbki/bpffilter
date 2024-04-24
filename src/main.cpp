@@ -1,4 +1,3 @@
-#include <array>
 #include <bpf/bpf.h>
 #include <thread>
 #include <chrono>
@@ -73,6 +72,7 @@ void run_polling(XdpProgramPtr& program) {
   while (IS_RUNNING) {
     auto value = get_kernel_value(map_df, KEY);
     print(std::format("Packets: {}", value.received_packets));
+    print(std::format("Bytes: {}", value.received_bytes));
     std::this_thread::sleep_for(SLEEP_INTERVAL);
   }
 }
