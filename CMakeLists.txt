@@ -54,7 +54,7 @@ add_custom_target(dummy_target ALL
 add_executable(${PROJECT_NAME}
   "${CMAKE_SOURCE_DIR}/src/main.cpp"
 )
-target_link_libraries(${PROJECT_NAME} /usr/lib/x86_64-linux-gnu/libbpf.a elf z)
+target_link_libraries(${PROJECT_NAME} /usr/lib/x86_64-linux-gnu/libbpf.a xdp elf z)
 
 add_common_flags(${PROJECT_NAME})
 add_flag(${PROJECT_NAME} "-std=c++20")
