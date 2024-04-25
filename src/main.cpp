@@ -1,4 +1,5 @@
 #include <bpf/bpf.h>
+#include <optional>
 #include <thread>
 #include <chrono>
 #include <bpf/libbpf.h>
@@ -19,6 +20,7 @@
 #include "common.h"
 #include "xdp_program.hxx"
 
+// DEFAULT_PORT should not be used in logic, it is just a placeholder
 const unsigned short DEFAULT_PORT = 0;
 const std::chrono::seconds SLEEP_INTERVAL {1};
 static volatile sig_atomic_t IS_RUNNING = 1; // NOLINT
@@ -63,9 +65,22 @@ StatData get_kernel_value(BpfFileDescriptor fd, __u32 key)
   return result;
 }
 
+template<typename T>
+unsigned char
+flag_from_optional(std::optional<T> optional, unsigned char flag)
+{
+  const unsigned char none = 0;
+  return optional.has_value() ? flag : none;
+}
+
 void configure_kernel_program(XdpProgram& program, const CmdLineOptions& options) {
+  unsigned char filter_flags = (
+    flag_from_optional(options.src_port, FILTER_SRC_PORT) |
+    flag_from_optional(options.dst_port, FILTER_DST_PORT));
   ConfigData config {
+    .src_port = options.src_port.value_or(DEFAULT_PORT),
     .dst_port = options.dst_port.value_or(DEFAULT_PORT),
+    .filter_flags = filter_flags,
   };
   auto map_fd = find_map_fd(program.bpf_object_ptr(), "xdp_config_map");
   auto error = bpf_map_update_elem(map_fd.descriptor, &KEY, &config, 0);

@@ -27,36 +27,42 @@ struct {
 SEC("xdp")
 int xdp_prog(struct xdp_md* ctx)
 {
-  __u64 length = ctx->data_end - ctx->data;
   void *data_end = (void *)(long)ctx->data_end;
   void *data = (void *)(long)ctx->data;
-  int is_collected = 0;
+  __u8 filter_flags = 0;
 
   struct ethhdr *eth_header = data;
   if (eth_header + 1 > data_end) { // NOLINT
-    return XDP_PASS;
+    return XDP_ABORTED;
   }
+
+  struct ConfigData *configs = bpf_map_lookup_elem(&xdp_config_map, &KEY);
+  if (!configs) {
+    return XDP_ABORTED;
+  }
+
+  int is_src_port_collecting = configs->filter_flags & FILTER_SRC_PORT;
+  int is_dst_port_collecting = configs->filter_flags & FILTER_DST_PORT;
 
   if (eth_header->h_proto == htons(ETH_P_IP)) {
     struct iphdr *ip_header = (struct iphdr *) ((uint8_t *) eth_header + ETH_HLEN);
     if (ip_header + 1 > (struct iphdr *)data_end)
     {
-        return XDP_PASS;
+        return XDP_ABORTED;
     }
     if(ip_header->protocol == IPPROTO_TCP) {
       struct tcphdr *tcp_header = data + sizeof(struct ethhdr) + (ip_header->ihl * 4);
       if (tcp_header + 1 > (struct tcphdr *)data_end)
       {
-          return XDP_DROP;
+          return XDP_ABORTED;
       }
       unsigned int sport = htons((unsigned short int) tcp_header->source);
       unsigned int dport = htons((unsigned short int) tcp_header->dest);
-      struct ConfigData *result = bpf_map_lookup_elem(&xdp_config_map, &KEY);
-      if (!result) {
-        return XDP_ABORTED;
+      if (is_src_port_collecting && (sport == configs->src_port)) {
+        filter_flags |= FILTER_SRC_PORT;
       }
-      if (dport == result->dst_port) {
-        is_collected = 1;
+      if (is_dst_port_collecting && (dport == configs->dst_port)) {
+        filter_flags |= FILTER_DST_PORT;
       }
     }
   }
@@ -66,7 +72,8 @@ int xdp_prog(struct xdp_md* ctx)
     return XDP_ABORTED;
   }
 
-  if (is_collected) {
+  if (filter_flags == configs->filter_flags) {
+    __u64 length = ctx->data_end - ctx->data;
     // I have to use synchronization because of BPF_MAP_TYPE_ARRAY. It is slow
     // but simple for this example.
     __sync_fetch_and_add(&result->received_packets, 1);

@@ -26,4 +26,5 @@ nc -lv 9000
 Netcat client:
 ```bash
 nc -v localhost 9000
+nc -v localhost 9000 -p 9002 # for a source port
 ```

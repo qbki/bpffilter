@@ -12,16 +12,17 @@
 
 #include "./cmdline.hxx"
 
+const std::string OPTION_SRC_PORT {"sp"};
 const std::string OPTION_DST_PORT {"dp"};
 const std::string OPTION_INTERFACE {"if"};
 
 const std::unordered_set<std::string> KNOWN_OPTIONS {
+  OPTION_SRC_PORT,
   OPTION_DST_PORT,
   OPTION_INTERFACE,
 };
 
 const std::unordered_set<std::string> REQUIRED_OPTIONS {
-  OPTION_DST_PORT,
   OPTION_INTERFACE,
 };
 
@@ -65,8 +66,8 @@ std::optional<T> get_number_value(const RawOptionMappting& options,
                                   const std::string& option_name)
 {
   return options.contains(option_name)
-    ? parse_number<T>(options.at(option_name))
-    : std::make_optional<T>();
+    ? std::make_optional(parse_number<T>(options.at(option_name)))
+    : std::nullopt;
 };
 
 void check_option_names(const RawOptionMappting& options) {
@@ -105,6 +106,7 @@ CmdLineOptions parse_cmdline_options(int argc, char **argv) {
   check_option_names(options);
   check_required_options(options);
   return {
+    .src_port = get_number_value<PortType>(options, OPTION_SRC_PORT),
     .dst_port = get_number_value<PortType>(options, OPTION_DST_PORT),
     .interface_index = get_interface_index(options, OPTION_INTERFACE),
   };
