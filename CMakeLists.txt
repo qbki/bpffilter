@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.27)
 
 project(bpffilter VERSION 0.0.1)
 
-include(FetchContent)
-
 set(CMAKE_C_COMPILER "clang")
 set(CMAKE_C_OUTPUT_EXTENSION_REPLACE 1)
 set(CMAKE_C_OUTPUT_EXTENSION ".o")
@@ -29,14 +27,6 @@ function(add_common_flags target)
 endfunction()
 
 file(MAKE_DIRECTORY ${GENERATED_INCLUDE_DIR})
-execute_process(
-  COMMAND
-    bpftool btf dump file /sys/kernel/btf/vmlinux format c
-  WORKING_DIRECTORY
-    ${CMAKE_CURRENT_BINARY_DIR}
-  OUTPUT_FILE
-    ${GENERATED_VMLINUX_H}
-)
 
 add_library(MAIN_BPF OBJECT "${CMAKE_SOURCE_DIR}/src/main.bpf.c")
 add_flag(MAIN_BPF "-g") # Required. You can't use BPF maps without it.
@@ -55,6 +45,7 @@ add_custom_target(dummy_target ALL
 
 add_executable(${PROJECT_NAME}
   "${CMAKE_SOURCE_DIR}/src/main.cpp"
+  "${CMAKE_SOURCE_DIR}/src/cmdline.cpp"
 )
 target_link_libraries(${PROJECT_NAME} /usr/lib/x86_64-linux-gnu/libbpf.a xdp elf z)
 

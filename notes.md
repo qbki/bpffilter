@@ -25,5 +25,5 @@ nc -lv 9000
 
 Netcat client:
 ```bash
-nc -v localhost 1234
+nc -v localhost 9000
 ```

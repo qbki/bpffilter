@@ -5,9 +5,13 @@
 // just copied real type from its definition. For instance:
 // typedef long long unsigned int __u64;
 //         ^real type             ^goes to comment
-struct InterfaceData {
+struct StatData {
 	long long unsigned int received_packets; // __u64
 	long long unsigned int received_bytes; // __u64
+};
+
+struct ConfigData {
+  unsigned short dst_port; // __u32
 };
 
 const unsigned int KEY = 0; // __u32

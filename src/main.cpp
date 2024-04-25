@@ -13,10 +13,13 @@
 #include <sys/types.h>
 #include <xdp/libxdp.h>
 
+#include "cmdline.hxx"
 #include "main.skel.h"
 #include "utils.hxx"
 #include "common.h"
 
+
+const unsigned short DEFAULT_PORT = 0;
 const std::chrono::seconds SLEEP_INTERVAL {1};
 static volatile sig_atomic_t IS_RUNNING = 1; // NOLINT
 
@@ -57,9 +60,9 @@ BpfFileDescriptor find_map_fd(bpf_object *bpf_obj, const std::string& map_name)
   return { file_descriptor };
 }
 
-InterfaceData get_kernel_value(BpfFileDescriptor fd, __u32 key)
+StatData get_kernel_value(BpfFileDescriptor fd, __u32 key)
 {
-  InterfaceData result {};
+  StatData result {};
   auto error = bpf_map_lookup_elem(fd.descriptor, &key, &result);
 	if (error != 0) {
     throw std::runtime_error(std::format("Can't map data from the kernel program: {}", key));
@@ -67,21 +70,32 @@ InterfaceData get_kernel_value(BpfFileDescriptor fd, __u32 key)
   return result;
 }
 
+void configure_kernel_program(XdpProgramPtr& program, const CmdLineOptions& options) {
+  ConfigData config {
+    .dst_port = options.dst_port.value_or(DEFAULT_PORT),
+  };
+  auto map_fd = find_map_fd(xdp_program__bpf_obj(program.get()), "xdp_config_map");
+  auto error = bpf_map_update_elem(map_fd.descriptor, &KEY, &config, 0);
+  if (error < 0) {
+    throw std::runtime_error("Can't send configuration to the kernel program");
+  }
+}
+
 void run_polling(XdpProgramPtr& program) {
-  auto map_df = find_map_fd(xdp_program__bpf_obj(program.get()), "xdp_stats_map");
+  auto map_fd = find_map_fd(xdp_program__bpf_obj(program.get()), "xdp_stats_map");
   while (IS_RUNNING) {
-    auto value = get_kernel_value(map_df, KEY);
+    auto value = get_kernel_value(map_fd, KEY);
     print(std::format("Packets: {}", value.received_packets));
     print(std::format("Bytes: {}", value.received_bytes));
     std::this_thread::sleep_for(SLEEP_INTERVAL);
   }
 }
 
-int main()
-{
+int main(int argc, char **argv) {
   // Ctrl+C handling
   signal(SIGINT, finish_application);
   try {
+    auto config = parse_cmdline_options(argc, argv);
     long error = 0;
 
     BpfProgramPtr bpf_program {main_bpf::open(), bpf_deleter};
@@ -100,8 +114,11 @@ int main()
       throw std::runtime_error(std::format("Can't attach XDP program to interface. Err code: {}", error));
     }
 
+    configure_kernel_program(xdp_program, config);
     run_polling(xdp_program);
   } catch(std::runtime_error& exception) {
     print_err(exception.what());
+  } catch(...) {
+    print_err("Unexpected error");
   }
 }
