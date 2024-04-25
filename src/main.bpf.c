@@ -5,6 +5,7 @@
 #include <linux/udp.h>
 #include <bpf/bpf_helpers.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include "common.h"
 
@@ -41,27 +42,35 @@ int xdp_prog(struct xdp_md* ctx)
     return XDP_ABORTED;
   }
 
+  int is_src_address_collecting = configs->filter_flags & FILTER_SRC_ADDRESS;
+  int is_dst_address_collecting = configs->filter_flags & FILTER_DST_ADDRESS;
   int is_src_port_collecting = configs->filter_flags & FILTER_SRC_PORT;
   int is_dst_port_collecting = configs->filter_flags & FILTER_DST_PORT;
 
   if (eth_header->h_proto == htons(ETH_P_IP)) {
     struct iphdr *ip_header = (struct iphdr *) ((uint8_t *) eth_header + ETH_HLEN);
-    if (ip_header + 1 > (struct iphdr *)data_end)
-    {
+    if (ip_header + 1 > (struct iphdr *)data_end) {
         return XDP_ABORTED;
+    }
+    __u32 saddress = (__u32) ip_header->saddr;
+    __u32 daddress = (__u32) ip_header->daddr;
+    if (is_src_address_collecting && (configs->src_address == saddress)) {
+      filter_flags |= FILTER_SRC_ADDRESS;
+    }
+    if (is_dst_address_collecting && (configs->dst_address == daddress)) {
+      filter_flags |= FILTER_DST_ADDRESS;
     }
     if(ip_header->protocol == IPPROTO_TCP) {
       struct tcphdr *tcp_header = data + sizeof(struct ethhdr) + (ip_header->ihl * 4);
-      if (tcp_header + 1 > (struct tcphdr *)data_end)
-      {
+      if (tcp_header + 1 > (struct tcphdr *)data_end) {
           return XDP_ABORTED;
       }
-      unsigned int sport = htons((unsigned short int) tcp_header->source);
-      unsigned int dport = htons((unsigned short int) tcp_header->dest);
-      if (is_src_port_collecting && (sport == configs->src_port)) {
+      __u16 sport = (__u16) tcp_header->source;
+      __u16 dport = (__u16) tcp_header->dest;
+      if (is_src_port_collecting && (configs->src_port) == sport ) {
         filter_flags |= FILTER_SRC_PORT;
       }
-      if (is_dst_port_collecting && (dport == configs->dst_port)) {
+      if (is_dst_port_collecting && (configs->dst_port == dport )) {
         filter_flags |= FILTER_DST_PORT;
       }
     }
@@ -74,8 +83,8 @@ int xdp_prog(struct xdp_md* ctx)
 
   if (filter_flags == configs->filter_flags) {
     __u64 length = ctx->data_end - ctx->data;
-    // I have to use synchronization because of BPF_MAP_TYPE_ARRAY. It is slow
-    // but simple for this example.
+    // I have to use synchronization because of BPF_MAP_TYPE_ARRAY.
+    // It is slow but simple for this example.
     __sync_fetch_and_add(&result->received_packets, 1);
     __sync_fetch_and_add(&result->received_bytes, length);
   }

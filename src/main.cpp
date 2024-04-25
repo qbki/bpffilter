@@ -1,4 +1,5 @@
 #include <bpf/bpf.h>
+#include <cstdint>
 #include <optional>
 #include <thread>
 #include <chrono>
@@ -20,8 +21,11 @@
 #include "common.h"
 #include "xdp_program.hxx"
 
-// DEFAULT_PORT should not be used in logic, it is just a placeholder
-const unsigned short DEFAULT_PORT = 0;
+// DEFAULT_PORT and DEFAULT_ADDRESS should not be
+// used in logic, it is just a placeholder.
+const uint16_t DEFAULT_PORT = 0;
+const uint32_t DEFAULT_ADDRESS = 0;
+
 const std::chrono::seconds SLEEP_INTERVAL {1};
 static volatile sig_atomic_t IS_RUNNING = 1; // NOLINT
 
@@ -67,17 +71,22 @@ StatData get_kernel_value(BpfFileDescriptor fd, __u32 key)
 
 template<typename T>
 unsigned char
-flag_from_optional(std::optional<T> optional, unsigned char flag)
+flag_from_optional(std::optional<T> optional, uint8_t flag)
 {
   const unsigned char none = 0;
   return optional.has_value() ? flag : none;
 }
 
 void configure_kernel_program(XdpProgram& program, const CmdLineOptions& options) {
-  unsigned char filter_flags = (
+  uint8_t filter_flags = (
+    flag_from_optional(options.src_address, FILTER_SRC_ADDRESS) |
+    flag_from_optional(options.dst_address, FILTER_DST_ADDRESS) |
     flag_from_optional(options.src_port, FILTER_SRC_PORT) |
-    flag_from_optional(options.dst_port, FILTER_DST_PORT));
+    flag_from_optional(options.dst_port, FILTER_DST_PORT)
+  );
   ConfigData config {
+    .src_address = options.src_address.value_or(DEFAULT_ADDRESS),
+    .dst_address = options.dst_address.value_or(DEFAULT_ADDRESS),
     .src_port = options.src_port.value_or(DEFAULT_PORT),
     .dst_port = options.dst_port.value_or(DEFAULT_PORT),
     .filter_flags = filter_flags,

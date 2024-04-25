@@ -1,8 +1,10 @@
 #pragma once
 
 const unsigned int KEY = 0; // __u32
-const unsigned char FILTER_DST_PORT = 1 << 0;
-const unsigned char FILTER_SRC_PORT = 2 << 0;
+const unsigned char FILTER_SRC_ADDRESS = 1u << 0;
+const unsigned char FILTER_DST_ADDRESS = 1u << 1;
+const unsigned char FILTER_SRC_PORT    = 1u << 2;
+const unsigned char FILTER_DST_PORT    = 1u << 3;
 
 // Types of this structure must be taken from "vmlinux.h". But I can't include
 // "vmlinux.h" into C++ application because of absence of some types. So, I
@@ -15,6 +17,8 @@ struct StatData {
 };
 
 struct ConfigData {
+  unsigned int src_address; // __u32
+  unsigned int dst_address; // __u32
   unsigned short src_port; // __u16
   unsigned short dst_port; // __u16
   unsigned char filter_flags; // __u8

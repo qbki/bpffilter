@@ -1,9 +1,12 @@
 #pragma once
+#include <cstdint>
 #include <optional>
 
 struct CmdLineOptions {
-  std::optional<unsigned short> src_port {};
-  std::optional<unsigned short> dst_port {};
+  std::optional<uint32_t> src_address {};
+  std::optional<uint32_t> dst_address {};
+  std::optional<uint16_t> src_port {};
+  std::optional<uint16_t> dst_port {};
   unsigned int interface_index {0};
 };
 
