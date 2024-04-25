@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <format>
 #include <fstream>
+#include <net/if.h>
 #include <optional>
 #include <ranges>
 #include <sstream>
@@ -12,13 +13,16 @@
 #include "./cmdline.hxx"
 
 const std::string OPTION_DST_PORT {"dp"};
+const std::string OPTION_INTERFACE {"if"};
 
 const std::unordered_set<std::string> KNOWN_OPTIONS {
-  OPTION_DST_PORT
+  OPTION_DST_PORT,
+  OPTION_INTERFACE,
 };
 
 const std::unordered_set<std::string> REQUIRED_OPTIONS {
-  OPTION_DST_PORT
+  OPTION_DST_PORT,
+  OPTION_INTERFACE,
 };
 
 using RawOptionMappting = std::unordered_map<std::string, std::string>;
@@ -57,7 +61,7 @@ T parse_number(const std::string& option) {
 }
 
 template<typename T>
-std::optional<T> get_option_value(const RawOptionMappting& options,
+std::optional<T> get_number_value(const RawOptionMappting& options,
                                   const std::string& option_name)
 {
   return options.contains(option_name)
@@ -82,11 +86,26 @@ void check_required_options(const RawOptionMappting& options) {
   }
 }
 
+unsigned int get_interface_index(const RawOptionMappting& options,
+                        const std::string& option_name)
+{
+  if (!options.contains(option_name)) {
+    throw std::runtime_error(std::format("Can't find an interface option: {}", option_name));
+  }
+  auto interface_name = options.at(option_name);
+  auto result = if_nametoindex(interface_name.c_str());
+  if (result == 0) {
+    throw std::runtime_error(std::format("Can't find an interface by name: {}", interface_name));
+  }
+  return result;
+}
+
 CmdLineOptions parse_cmdline_options(int argc, char **argv) {
   auto options = populate_options_map(argc, argv);
   check_option_names(options);
   check_required_options(options);
   return {
-    .dst_port = get_option_value<PortType>(options, OPTION_DST_PORT),
+    .dst_port = get_number_value<PortType>(options, OPTION_DST_PORT),
+    .interface_index = get_interface_index(options, OPTION_INTERFACE),
   };
 }

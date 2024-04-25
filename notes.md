@@ -5,7 +5,7 @@ sudo bpftool net list dev lo
 
 Unload all XDP programs from kernel.
 ```bash
-sudo ip lint net list dev lo
+sudo bpftool net detach xdpgeneric dev lo
 ```
 
 Install linux headers
