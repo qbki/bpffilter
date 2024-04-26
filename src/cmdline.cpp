@@ -15,7 +15,6 @@
 #include <vector>
 
 #include "./cmdline.hxx"
-#include "utils.hxx"
 
 const std::string OPTION_SRC_ADDRESS {"sa"};
 const std::string OPTION_DST_ADDRESS {"da"};
@@ -144,10 +143,6 @@ parse_cmdline_options(int argc, char **argv)
   auto options = populate_options_map(argc, argv);
   check_option_names(options);
   check_required_options(options);
-  print(std::format(
-        "{}",
-        get_address(options, OPTION_SRC_ADDRESS).value_or(0)
-  ));
   return {
     .src_address = get_address(options, OPTION_SRC_ADDRESS),
     .dst_address = get_address(options, OPTION_DST_ADDRESS),
