@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <iostream>
 #include <optional>
+#include <vector>
 
 template<typename T>
 inline void
@@ -49,6 +50,16 @@ template<typename T>
 inline uint8_t
 flag_from_optional(std::optional<T> optional, uint8_t flag)
 {
-  const unsigned char none = 0;
+  const uint8_t none = 0;
   return optional.has_value() ? flag : none;
 }
+
+inline uint8_t
+flag_from_boolean(bool value, uint8_t flag)
+{
+  const uint8_t none = 0;
+  return value ? flag : none;
+}
+
+std::vector<std::string>
+split(const std::string& value, const std::string& delimiter);

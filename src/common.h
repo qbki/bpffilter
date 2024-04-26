@@ -6,6 +6,8 @@ const unsigned char FILTER_SRC_ADDRESS = 1u << 0;
 const unsigned char FILTER_DST_ADDRESS = 1u << 1;
 const unsigned char FILTER_SRC_PORT    = 1u << 2;
 const unsigned char FILTER_DST_PORT    = 1u << 3;
+const unsigned char FILTER_TCP         = 1u << 4;
+const unsigned char FILTER_UDP         = 1u << 5;
 
 // Types of this structure must be taken from "vmlinux.h". But I can't include
 // "vmlinux.h" into C++ application because of absence of some types. So, I

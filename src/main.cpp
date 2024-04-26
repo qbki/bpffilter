@@ -80,7 +80,9 @@ configure_kernel_program(XdpProgram& program, const CmdLineOptions& options)
     flag_from_optional(options.src_address, FILTER_SRC_ADDRESS) |
     flag_from_optional(options.dst_address, FILTER_DST_ADDRESS) |
     flag_from_optional(options.src_port, FILTER_SRC_PORT) |
-    flag_from_optional(options.dst_port, FILTER_DST_PORT)
+    flag_from_optional(options.dst_port, FILTER_DST_PORT) |
+    flag_from_boolean(options.collect_tcp, FILTER_TCP) |
+    flag_from_boolean(options.collect_udp, FILTER_UDP)
   );
   ConfigData config {
     .src_address = options.src_address.value_or(DEFAULT_ADDRESS),

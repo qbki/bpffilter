@@ -12,39 +12,9 @@
 #include <sys/socket.h>
 #include <unordered_map>
 #include <unordered_set>
-#include <vector>
 
-#include "./cmdline.hxx"
-
-const std::string OPTION_SRC_ADDRESS {"sa"};
-const std::string OPTION_DST_ADDRESS {"da"};
-const std::string OPTION_SRC_PORT {"sp"};
-const std::string OPTION_DST_PORT {"dp"};
-const std::string OPTION_INTERFACE {"if"};
-
-const std::unordered_set<std::string> KNOWN_OPTIONS {
-  OPTION_SRC_ADDRESS,
-  OPTION_DST_ADDRESS,
-  OPTION_SRC_PORT,
-  OPTION_DST_PORT,
-  OPTION_INTERFACE,
-};
-
-const std::unordered_set<std::string> REQUIRED_OPTIONS {
-  OPTION_INTERFACE,
-};
-
-using RawOptionMappting = std::unordered_map<std::string, std::string>;
-
-std::vector<std::string>
-split(const std::string& value, const std::string& delimiter)
-{
-  auto view = value | std::views::split(delimiter)
-                    | std::views::transform([](const auto& v) {
-                        return std::string(v.begin(), v.end());
-                      });
-  return {view.begin(), view.end()};
-}
+#include "cmdline.hxx"
+#include "utils.hxx"
 
 RawOptionMappting
 populate_options_map(int argc, char **argv)
@@ -87,6 +57,9 @@ get_address(const RawOptionMappting& options, const std::string& option_name)
   if (option.empty()) {
     throw std::runtime_error("IP address was not specified");
   }
+  if (CMDLINE_ANY_PLACEHOLDERS.contains(option)) {
+    return std::nullopt;
+  }
   uint32_t result = 0;
   auto error = inet_pton(AF_INET, option.c_str(), &result);
   if (error <= 0) {
@@ -98,10 +71,37 @@ get_address(const RawOptionMappting& options, const std::string& option_name)
 std::optional<uint16_t>
 get_port(const RawOptionMappting& options, const std::string& option_name)
 {
-  return options.contains(option_name)
-    ? std::make_optional(parse_number<uint16_t>(options.at(option_name)))
-    : std::nullopt;
+  if (!options.contains(option_name)) {
+    return std::nullopt;
+  }
+  auto option = options.at(option_name);
+  if (option.empty()) {
+    throw std::runtime_error("Port was not specified");
+  }
+  if (CMDLINE_ANY_PLACEHOLDERS.contains(option)) {
+    return std::nullopt;
+  }
+  return std::make_optional(parse_number<uint16_t>(option));
 };
+
+bool
+get_protocol(const RawOptionMappting& options,
+             const std::string& option_name,
+             const std::string& expected_protocol)
+{
+  // By default we are collecting all protocols
+  if (!options.contains(option_name)) {
+    return true;
+  }
+  auto option = options.at(option_name);
+  if (option.empty()) {
+    throw std::runtime_error("Protocol was not specified");
+  }
+  if (CMDLINE_ANY_PLACEHOLDERS.contains(option)) {
+    return true;
+  }
+  return options.at(option_name) == expected_protocol;
+}
 
 void
 check_option_names(const RawOptionMappting& options)
@@ -148,6 +148,8 @@ parse_cmdline_options(int argc, char **argv)
     .dst_address = get_address(options, OPTION_DST_ADDRESS),
     .src_port = get_port(options, OPTION_SRC_PORT),
     .dst_port = get_port(options, OPTION_DST_PORT),
+    .collect_tcp = get_protocol(options, OPTION_PROTOCOL, PROTOCOL_TCP),
+    .collect_udp = get_protocol(options, OPTION_PROTOCOL, PROTOCOL_UDP),
     .interface_index = get_interface_index(options, OPTION_INTERFACE),
   };
 }
