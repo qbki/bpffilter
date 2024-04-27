@@ -153,3 +153,7 @@ parse_cmdline_options(int argc, char **argv)
     .interface_index = get_interface_index(options, OPTION_INTERFACE),
   };
 }
+
+void print_help() {
+  print(HELP_TEXT);
+}

@@ -6,16 +6,19 @@
 #include <unordered_set>
 
 const std::string HELP_TEXT {
-  "bpffilter if=<interface name> [sa=*] [da=*] [sp=*] [dp=*] [pr=udp|tcp|*]\n"
-  "  if - interface where eBPF program will be installed\n"
-  "  sa - a source IPv4 address or *\n"
-  "  da - a destination IPv4 address or *\n"
-  "  sp - a source port 0-65535 or *\n"
-  "  dp - a destination port 0-65535 or *\n"
-  "  pr - a protocol, possible values: udp, tcp or *\n"
+  "  bpffilter if=<interface name> [sa=*] [da=*] [sp=*] [dp=*] [pr=udp|tcp|*]\n"
+  "\n"
+  "    if - interface where eBPF program will be installed\n"
+  "    sa - a source IPv4 address or *\n"
+  "    da - a destination IPv4 address or *\n"
+  "    sp - a source port 0-65535 or *\n"
+  "    dp - a destination port 0-65535 or *\n"
+  "    pr - a protocol, possible values: udp, tcp or *\n"
+  "\n"
   "Example:\n"
   "  $ sudo ./bpffilter if=lo sp=9002 dp=9000 pr=udp\n"
-  "  It will watch network packages on a localhost interface.\n"
+  "\n"
+  "  It will watch network packages on the loopback interface."
 };
 
 const std::string OPTION_SRC_ADDRESS {"sa"};
@@ -24,6 +27,7 @@ const std::string OPTION_SRC_PORT {"sp"};
 const std::string OPTION_DST_PORT {"dp"};
 const std::string OPTION_INTERFACE {"if"};
 const std::string OPTION_PROTOCOL {"pr"};
+const std::string OPTION_HELP {"help"};
 
 const std::string PROTOCOL_UDP {"udp"};
 const std::string PROTOCOL_TCP {"tcp"};
@@ -58,4 +62,5 @@ struct CmdLineOptions {
   unsigned int interface_index {0};
 };
 
+void print_help();
 CmdLineOptions parse_cmdline_options(int argc, char **argv);

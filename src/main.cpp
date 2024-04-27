@@ -38,6 +38,10 @@ void run_polling(XdpProgram& program);
 int
 main(int argc, char **argv)
 {
+  if (argc <= 1) {
+    print_help();
+    return 0;
+  }
   // Ctrl+C handling
   signal(SIGINT, finish_application);
   try {
@@ -54,6 +58,7 @@ main(int argc, char **argv)
   } catch(...) {
     print_err("Unexpected error");
   }
+  return 0;
 }
 
 void
