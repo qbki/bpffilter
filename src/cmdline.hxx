@@ -5,6 +5,19 @@
 #include <unordered_map>
 #include <unordered_set>
 
+const std::string HELP_TEXT {
+  "bpffilter if=<interface name> [sa=*] [da=*] [sp=*] [dp=*] [pr=udp|tcp|*]\n"
+  "  if - interface where eBPF program will be installed\n"
+  "  sa - a source IPv4 address or *\n"
+  "  da - a destination IPv4 address or *\n"
+  "  sp - a source port 0-65535 or *\n"
+  "  dp - a destination port 0-65535 or *\n"
+  "  pr - a protocol, possible values: udp, tcp or *\n"
+  "Example:\n"
+  "  $ sudo ./bpffilter if=lo sp=9002 dp=9000 pr=udp\n"
+  "  It will watch network packages on a localhost interface.\n"
+};
+
 const std::string OPTION_SRC_ADDRESS {"sa"};
 const std::string OPTION_DST_ADDRESS {"da"};
 const std::string OPTION_SRC_PORT {"sp"};

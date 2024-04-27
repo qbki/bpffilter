@@ -9,7 +9,6 @@ set(CMAKE_CXX_COMPILER "clang++")
 set(CMAKE_CXX_FLAGS_INIT "-Wall -std=c++20")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/include")
-set(GENERATED_VMLINUX_H "${GENERATED_INCLUDE_DIR}/vmlinux.h")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 include_directories(SYSTEM ${GENERATED_INCLUDE_DIR})
@@ -50,7 +49,8 @@ add_executable(${PROJECT_NAME}
   "${CMAKE_SOURCE_DIR}/src/bpf_program.cpp"
   "${CMAKE_SOURCE_DIR}/src/xdp_program.cpp"
 )
-target_link_libraries(${PROJECT_NAME} bpf xdp elf z)
+target_link_libraries(${PROJECT_NAME} xdp bpf elf zstd z)
+target_link_options(${PROJECT_NAME} PRIVATE -stdlib=libstdc++ -static)
 
 add_common_flags(${PROJECT_NAME})
 add_flag(${PROJECT_NAME} "-std=c++20")
