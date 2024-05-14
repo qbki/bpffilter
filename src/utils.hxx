@@ -6,23 +6,29 @@
 
 template<typename T>
 inline void
-print(const T& value)
+print(const T& value, bool has_next_line = true)
 {
-  std::cout << value << std::endl;
+  std::cout << value;
+  if (has_next_line) {
+    std::cout << std::endl;
+  }
 }
 
 template<typename T>
 inline void
-print(const T* value)
+print(const T* value, bool has_next_line = true)
 {
-  std::cout << *value << std::endl;
+  print(*value, has_next_line);
 }
 
 template<>
 inline void
-print(const char* value)
+print(const char* value, bool has_next_line)
 {
-  std::cout << value << std::endl;
+  std::cout << value;
+  if (has_next_line) {
+    std::cout << std::endl;
+  }
 }
 
 template<typename T>
@@ -63,3 +69,15 @@ flag_from_boolean(bool value, uint8_t flag)
 
 std::vector<std::string>
 split(const std::string& value, const std::string& delimiter);
+
+std::string
+format_mbitps(unsigned long bytes, unsigned long seconds);
+
+std::string
+format_mbyteps(unsigned long bytes, unsigned long seconds);
+
+std::string
+format_bytes(unsigned long size);
+
+std::string
+format_ipv4_address(uint32_t value);

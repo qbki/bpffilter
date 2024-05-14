@@ -25,7 +25,7 @@ populate_options_map(int argc, char **argv)
     std::string option {argv[i]}; // NOLINT
     auto parts = split(option, "=");
     if (parts.size() < 2) {
-      throw std::runtime_error(std::format("Wrong option: ", option));
+      throw std::runtime_error(std::format("Wrong option: {}", option));
     }
     result.insert({ parts.at(0), parts.at(1) });
   }
@@ -117,7 +117,8 @@ check_option_names(const RawOptionMappting& options)
 void check_required_options(const RawOptionMappting& options) {
   for (auto& required_option : REQUIRED_OPTIONS) {
     if (!options.contains(required_option)) {
-      throw std::runtime_error(std::format("Option \"{}\" is required", required_option));
+      throw std::runtime_error(std::format("Option \"{}\" is required",
+                                           required_option));
     }
   }
 }
@@ -127,14 +128,36 @@ get_interface_index(const RawOptionMappting& options,
                     const std::string& option_name)
 {
   if (!options.contains(option_name)) {
-    throw std::runtime_error(std::format("Can't find an interface option: {}", option_name));
+    throw std::runtime_error(std::format("Can't find an interface option: {}",
+                                         option_name));
   }
   auto interface_name = options.at(option_name);
   auto result = if_nametoindex(interface_name.c_str());
   if (result == 0) {
-    throw std::runtime_error(std::format("Can't find an interface by name: {}", interface_name));
+    throw std::runtime_error(std::format("Can't find an interface by name: {}",
+                                         interface_name));
   }
   return result;
+}
+
+SpeedFormatEnum
+get_speed_format(const RawOptionMappting& options,
+                 const std::string& option_name)
+{
+  if (!options.contains(option_name)) {
+    return SpeedFormatEnum::BIT;
+  }
+  auto value = options.at(option_name);
+  if (value == SPEED_FORMAT_BIT) {
+    return SpeedFormatEnum::BIT;
+  } else if (value == SPEED_FORMAT_BYTE) {
+    return SpeedFormatEnum::BYTE;
+  }
+  throw std::runtime_error(std::format(
+        "Unknown speed format: \"{}\". Please, use {} or {}",
+        value,
+        SPEED_FORMAT_BIT,
+        SPEED_FORMAT_BYTE));
 }
 
 CmdLineOptions
@@ -150,6 +173,7 @@ parse_cmdline_options(int argc, char **argv)
     .dst_port = get_port(options, OPTION_DST_PORT),
     .collect_tcp = get_protocol(options, OPTION_PROTOCOL, PROTOCOL_TCP),
     .collect_udp = get_protocol(options, OPTION_PROTOCOL, PROTOCOL_UDP),
+    .speed_format = get_speed_format(options, OPTION_SPEED_FORMAT),
     .interface_index = get_interface_index(options, OPTION_INTERFACE),
   };
 }

@@ -1,6 +1,7 @@
 #pragma once
+#include <linux/bpf.h>
 
-const unsigned int KEY = 0; // __u32
+const __u32 KEY = 0;
 
 const unsigned char FILTER_SRC_ADDRESS = 1u << 0;
 const unsigned char FILTER_DST_ADDRESS = 1u << 1;
@@ -9,20 +10,15 @@ const unsigned char FILTER_DST_PORT    = 1u << 3;
 const unsigned char FILTER_TCP         = 1u << 4;
 const unsigned char FILTER_UDP         = 1u << 5;
 
-// Types of this structure must be taken from "vmlinux.h". But I can't include
-// "vmlinux.h" into C++ application because of absence of some types. So, I
-// just copied real type from its definition. For instance:
-// typedef long long unsigned int __u64;
-//         ^real type             ^goes to comment
 struct StatData {
-	long long unsigned int received_packets; // __u64
-	long long unsigned int received_bytes;   // __u64
+	__u64 received_packets;
+	__u64 received_bytes;
 };
 
 struct ConfigData {
-  unsigned int src_address;   // __u32
-  unsigned int dst_address;   // __u32
-  unsigned short src_port;    // __u16
-  unsigned short dst_port;    // __u16
-  unsigned char filter_flags; // __u8
+  __u32 src_address;
+  __u32 dst_address;
+  __u16 src_port;
+  __u16 dst_port;
+  __u8 filter_flags;
 };

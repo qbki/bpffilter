@@ -25,6 +25,8 @@ struct {
   __uint(max_entries, 1);
 } xdp_config_map SEC(".maps"); // NOLINT
 
+static __u64 START_TIME = 0; // NOLINT
+
 SEC("xdp")
 int xdp_prog(struct xdp_md* ctx)
 {
