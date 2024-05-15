@@ -4,6 +4,8 @@
 #include <optional>
 #include <vector>
 
+#include "common.h"
+
 template<typename T>
 inline void
 print(const T& value, bool has_next_line = true)
@@ -81,3 +83,5 @@ format_bytes(unsigned long size);
 
 std::string
 format_ipv4_address(uint32_t value);
+
+std::vector<StatData> generate_stats_per_cpu_array();

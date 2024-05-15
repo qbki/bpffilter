@@ -2,8 +2,6 @@
 #include <algorithm>
 #include <limits>
 
-#include "utils.hxx"
-
 template<typename T>
 class Sampler {
 private:
@@ -19,8 +17,6 @@ public:
 
   void sample(T value) {
     _distance = value - _last_sample;
-    print(_distance);
-    print(_min);
     _min = std::min(_min, _distance);
     _max = std::max(_max, _distance);
     _last_sample = value;

@@ -1,4 +1,5 @@
 #include <bpf/bpf.h>
+#include <bpf/libbpf.h>
 #include <cstdint>
 #include <exception>
 #include <optional>
@@ -74,11 +75,19 @@ finish_application(int)
 StatData
 get_stats(XdpProgram::BpfFileDescriptor fd)
 {
-  StatData result {};
-  auto error = bpf_map_lookup_elem(fd.descriptor, &KEY, &result);
-	if (error != 0) {
+  auto stats_per_cpu = generate_stats_per_cpu_array();
+  auto error = bpf_map_lookup_elem(fd.descriptor, &KEY, stats_per_cpu.data());
+  if (error != 0) {
     throw std::runtime_error("Can't get statistics from the kernel");
-	}
+  }
+  StatData result {
+    .received_packets = 0,
+    .received_bytes = 0,
+  };
+  for (auto& stat : stats_per_cpu) {
+    result.received_packets += stat.received_packets;
+    result.received_bytes += stat.received_bytes;
+  }
   return result;
 }
 
@@ -101,12 +110,8 @@ configure_kernel_program(XdpProgram& program, const CmdLineOptions& options)
     .filter_flags = filter_flags,
   };
   program.update_map(XDP_CONFIG_MAP, &config);
-
-  StatData data {
-    .received_packets = 0,
-    .received_bytes = 0,
-  };
-  program.update_map(XDP_STATS_MAP, &data);
+  auto empty_stats_array = generate_stats_per_cpu_array();
+  program.update_map(XDP_STATS_MAP, empty_stats_array.data());
 }
 
 void
@@ -127,6 +132,7 @@ run_polling(XdpProgram& program, const CmdLineOptions& options)
   auto format_protocol = [](bool value){
     return value ? "yes" : "no";
   };
+
   // I hope you have xterm
   print("\033[?1049h", false); // Goes to an alternative buffer
   while (IS_RUNNING) {
@@ -134,8 +140,8 @@ run_polling(XdpProgram& program, const CmdLineOptions& options)
     // appearance. In the other case you will get default values and wrong
     // minimal speed.
     std::this_thread::sleep_for(SLEEP_INTERVAL);
-    auto value = get_stats(map_fd);
-    bytes_sampler.sample(value.received_bytes);
+    auto stats_data = get_stats(map_fd);
+    bytes_sampler.sample(stats_data.received_bytes);
     auto elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(
         std::chrono::system_clock::now() - start_time).count();
     print("\033[2J", false); // Clears screen
@@ -149,11 +155,11 @@ run_polling(XdpProgram& program, const CmdLineOptions& options)
     print(std::format("Protocols: TCP:{} UDP:{}",
                       format_protocol(options.collect_tcp),
                       format_protocol(options.collect_udp)));
-    print(std::format("Packets: {}", value.received_packets));
-    print(std::format("Bytes: {}", format_bytes(value.received_bytes)));
+    print(std::format("Packets: {}", stats_data.received_packets));
+    print(std::format("Bytes: {}", format_bytes(stats_data.received_bytes)));
     print(std::format(
           "Average speed since start of the application: {}",
-          format_speed(value.received_bytes, elapsed_seconds)));
+          format_speed(stats_data.received_bytes, elapsed_seconds)));
     print(std::format("Time: {}sec", elapsed_seconds));
     print(std::format("Current speed: {}",
                       format_speed(bytes_sampler.distance(), 1)));

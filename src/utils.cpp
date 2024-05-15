@@ -1,5 +1,8 @@
+#include <bpf/libbpf.h>
+#include <cstddef>
 #include <format>
 #include <ranges>
+#include <stdexcept>
 
 #include "utils.hxx"
 
@@ -42,9 +45,24 @@ std::string format_bytes(unsigned long size) {
 
 std::string format_ipv4_address(uint32_t value) {
   const uint32_t byte_mask = 0b11111111;
+  const int octet_offset_1 = 8;
+  const int octet_offset_2 = 16;
+  const int octet_offset_3 = 24;
   return std::format("{}.{}.{}.{}",
                      value & byte_mask,
-                     (value >> 8) & byte_mask,
-                     (value >> 16) & byte_mask,
-                     (value >> 24) & byte_mask);
+                     (value >> octet_offset_1) & byte_mask,
+                     (value >> octet_offset_2) & byte_mask,
+                     (value >> octet_offset_3) & byte_mask);
 };
+
+std::vector<StatData> generate_stats_per_cpu_array() {
+  StatData data {
+    .received_packets = 0,
+    .received_bytes = 0,
+  };
+  auto cpus_quantity = libbpf_num_possible_cpus();
+  if (cpus_quantity <= 0) {
+    throw std::runtime_error("Imposible CPUs quantity");
+  }
+  return {static_cast<size_t>(cpus_quantity), data};
+}
