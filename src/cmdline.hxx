@@ -8,7 +8,7 @@
 const std::string HELP_TEXT {
   "  bpffilter if=<interface name> [sa=*] [da=*] [sp=*] [dp=*] [pr=udp|tcp|*]\n"
   "\n"
-  "    if - interface where eBPF program will be installed\n"
+  "    if - interface where an eBPF program will be installed\n"
   "    sf - a speed format, bit or byte\n"
   "    sa - a source IPv4 address or *\n"
   "    da - a destination IPv4 address or *\n"
