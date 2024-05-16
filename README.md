@@ -39,7 +39,7 @@ Max speed (peak): 17.98MiB/s
 
 Output will be updated once per second.
 
-The utility uses binary prefixes for unit formating from ISO/IEC 80000
+The utility uses binary prefixes for unit formatting from ISO/IEC 80000
 standard. So, one kibibit (Kibit) contains 1024 bits and one kibibyte (KiB)
 contains 1024 bytes.
 
@@ -85,7 +85,7 @@ The sequence of actions to build the utility with help of Docker:
 1. Create `build-docker` directory;
 2. Copy `.env.default` as `.env`;
 3. Edit `.env` as explaned in this file;
-4. Run `docker compose up`
+4. Run `docker compose up`.
 
 ```sh
 & mkdir build-docker
