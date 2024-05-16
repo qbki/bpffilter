@@ -1,14 +1,15 @@
 #include <format>
 #include <xdp/libxdp.h>
 
-#include "xdp_program.hxx"
 #include "common.h"
 #include "utils.hxx"
+#include "xdp_program.hxx"
 
 XdpProgram::XdpProgram(xdp_program* pointer, int if_index)
   : _program(pointer)
   , _if_index(if_index)
-{}
+{
+}
 
 XdpProgram::~XdpProgram()
 {
@@ -22,7 +23,8 @@ XdpProgram::attach()
 {
   auto error = xdp_program__attach(_program, _if_index, _mode, 0);
   if (error) {
-    throw std::runtime_error(std::format("Can't attach XDP program to interface. Err code: {}", error));
+    throw std::runtime_error(std::format(
+      "Can't attach XDP program to interface. Err code: {}", error));
   }
 }
 
@@ -50,20 +52,22 @@ XdpProgram::from_bpf_obj(bpf_object* object, int if_index)
   if (error) {
     throw std::runtime_error("Can't create XDP program");
   }
-  return {handle, if_index};
+  return { handle, if_index };
 }
 
 BpfFileDescriptor
 XdpProgram::find_map_fd(const std::string& map_name)
 {
   auto bpf_obj = xdp_program__bpf_obj(_program);
-	auto map = bpf_object__find_map_by_name(bpf_obj, map_name.c_str());
+  auto map = bpf_object__find_map_by_name(bpf_obj, map_name.c_str());
   if (!map) {
-    throw std::runtime_error(std::format("Can't find a map by name: {}", map_name));
-	}
-	auto file_descriptor = bpf_map__fd(map);
+    throw std::runtime_error(
+      std::format("Can't find a map by name: {}", map_name));
+  }
+  auto file_descriptor = bpf_map__fd(map);
   if (file_descriptor < 0) {
-    throw std::runtime_error(std::format("Can't get a file descriptor of a map: {}", map_name));
+    throw std::runtime_error(
+      std::format("Can't get a file descriptor of a map: {}", map_name));
   }
   return { file_descriptor };
 }

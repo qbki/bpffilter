@@ -1,18 +1,17 @@
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
+#include <chrono>
+#include <csignal>
 #include <cstdint>
 #include <exception>
-#include <optional>
-#include <thread>
-#include <chrono>
-#include <bpf/libbpf.h>
-#include <csignal>
 #include <fcntl.h>
 #include <format>
+#include <optional>
 #include <stdexcept>
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <thread>
 #include <xdp/libxdp.h>
 
 #include "bpf_program.hxx"
@@ -29,7 +28,7 @@
 const uint16_t DEFAULT_PORT = 0;
 const uint32_t DEFAULT_ADDRESS = 0;
 
-const std::chrono::seconds SLEEP_INTERVAL {1};
+const std::chrono::seconds SLEEP_INTERVAL{ 1 };
 static volatile sig_atomic_t IS_RUNNING = 1; // NOLINT
 
 const std::string XDP_CONFIG_MAP = "xdp_config_map";
@@ -40,7 +39,8 @@ const std::string XDP_STATS_MAP = "xdp_stats_map";
  * @param fd A BPF file descriptor.
  * @return Quantity of bytes and packages since start of application.
  */
-StatData get_stats(BpfFileDescriptor fd);
+StatData
+get_stats(BpfFileDescriptor fd);
 
 /**
  * Performs initialization of BPF maps which are used
@@ -48,24 +48,26 @@ StatData get_stats(BpfFileDescriptor fd);
  * @param program An XDP program.
  * @param options Command line options.
  */
-void configure_kernel_program(XdpProgram& program,
-                              const CmdLineOptions& options);
+void
+configure_kernel_program(XdpProgram& program, const CmdLineOptions& options);
 
 /**
  * A callback for handling of the "Ctrl+C" keyboard shortcut (SIGINT).
  * @param _ Unused.
  */
-void finish_application(int);
+void
+finish_application(int);
 
 /**
  * Performs an infinite loop with printing statistics once per second.
  * @param program An XDP program.
  * @param options Command line options.
  */
-void run_polling(XdpProgram& program, const CmdLineOptions& options);
+void
+run_polling(XdpProgram& program, const CmdLineOptions& options);
 
 int
-main(int argc, char **argv)
+main(int argc, char** argv)
 {
   if (argc <= 1) {
     print_help();
@@ -77,14 +79,13 @@ main(int argc, char **argv)
     auto config = parse_cmdline_options(argc, argv);
     auto bpf_program = BpfProgram::create();
     auto xdp_program = XdpProgram::from_bpf_obj(
-      bpf_program.get()->obj,
-      static_cast<int>(config.interface_index));
+      bpf_program.get()->obj, static_cast<int>(config.interface_index));
     xdp_program.attach();
     configure_kernel_program(xdp_program, config);
     run_polling(xdp_program, config);
-  } catch(std::exception& exception) {
+  } catch (std::exception& exception) {
     print_err(exception.what());
-  } catch(...) {
+  } catch (...) {
     print_err("Unexpected error");
   }
   return 0;
@@ -104,7 +105,7 @@ get_stats(BpfFileDescriptor fd)
   if (error != 0) {
     throw std::runtime_error("Can't get statistics from the kernel");
   }
-  StatData result {
+  StatData result{
     .received_packets = 0,
     .received_bytes = 0,
   };
@@ -118,15 +119,14 @@ get_stats(BpfFileDescriptor fd)
 void
 configure_kernel_program(XdpProgram& program, const CmdLineOptions& options)
 {
-  uint8_t filter_flags = (
-    flag_from_optional(options.src_address, FILTER_SRC_ADDRESS) |
-    flag_from_optional(options.dst_address, FILTER_DST_ADDRESS) |
-    flag_from_optional(options.src_port, FILTER_SRC_PORT) |
-    flag_from_optional(options.dst_port, FILTER_DST_PORT) |
-    flag_from_boolean(options.collect_tcp, FILTER_TCP) |
-    flag_from_boolean(options.collect_udp, FILTER_UDP)
-  );
-  ConfigData config {
+  uint8_t filter_flags =
+    (flag_from_optional(options.src_address, FILTER_SRC_ADDRESS) |
+     flag_from_optional(options.dst_address, FILTER_DST_ADDRESS) |
+     flag_from_optional(options.src_port, FILTER_SRC_PORT) |
+     flag_from_optional(options.dst_port, FILTER_DST_PORT) |
+     flag_from_boolean(options.collect_tcp, FILTER_TCP) |
+     flag_from_boolean(options.collect_udp, FILTER_UDP));
+  ConfigData config{
     .src_address = options.src_address.value_or(DEFAULT_ADDRESS),
     .dst_address = options.dst_address.value_or(DEFAULT_ADDRESS),
     .src_port = options.src_port.value_or(DEFAULT_PORT),
@@ -143,19 +143,17 @@ run_polling(XdpProgram& program, const CmdLineOptions& options)
 {
   auto map_fd = program.find_map_fd(XDP_STATS_MAP);
   auto start_time = std::chrono::system_clock::now();
-  Sampler<uint64_t> bytes_sampler {};
+  Sampler<uint64_t> bytes_sampler{};
   auto format_speed = options.speed_format == SpeedFormatEnum::BIT
-    ? format_mbitps
-    : format_mbyteps;
-  auto format_address = [](const std::optional<uint32_t>& value){
+                        ? format_mbitps
+                        : format_mbyteps;
+  auto format_address = [](const std::optional<uint32_t>& value) {
     return value.has_value() ? format_ipv4_address(value.value()) : "any";
   };
-  auto format_port = [](const std::optional<uint16_t>& value){
+  auto format_port = [](const std::optional<uint16_t>& value) {
     return value.has_value() ? std::to_string(value.value()) : "any";
   };
-  auto format_protocol = [](bool value){
-    return value ? "yes" : "no";
-  };
+  auto format_protocol = [](bool value) { return value ? "yes" : "no"; };
 
   Screen screen;
   while (IS_RUNNING) {
@@ -166,9 +164,9 @@ run_polling(XdpProgram& program, const CmdLineOptions& options)
     auto stats_data = get_stats(map_fd);
     bytes_sampler.sample(stats_data.received_bytes);
     auto elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(
-        std::chrono::system_clock::now() - start_time).count();
-    screen.clear()
-          .go_home();
+                             std::chrono::system_clock::now() - start_time)
+                             .count();
+    screen.clear().go_home();
     print(std::format("Source: {}:{}",
                       format_address(options.src_address),
                       format_port(options.src_port)));
@@ -180,9 +178,9 @@ run_polling(XdpProgram& program, const CmdLineOptions& options)
                       format_protocol(options.collect_udp)));
     print(std::format("Packets: {}", stats_data.received_packets));
     print(std::format("Bytes: {}", format_bytes(stats_data.received_bytes)));
-    print(std::format(
-          "Average speed since start of the application: {}",
-          format_speed(stats_data.received_bytes, elapsed_seconds)));
+    print(
+      std::format("Average speed since start of the application: {}",
+                  format_speed(stats_data.received_bytes, elapsed_seconds)));
     print(std::format("Time: {}sec", elapsed_seconds));
     print(std::format("Current speed: {}",
                       format_speed(bytes_sampler.distance(), 1)));

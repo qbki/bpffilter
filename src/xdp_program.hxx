@@ -4,7 +4,8 @@
 
 #include "common.h"
 
-class XdpProgram {
+class XdpProgram
+{
 private:
   xdp_program* _program;
   int _if_index = 0;

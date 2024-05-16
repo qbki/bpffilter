@@ -1,6 +1,7 @@
 #include "main.skel.h"
 
-class BpfProgram {
+class BpfProgram
+{
 private:
   main_bpf* _program;
 

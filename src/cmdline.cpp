@@ -17,12 +17,12 @@
 #include "utils.hxx"
 
 RawOptionMappting
-populate_options_map(int argc, char **argv)
+populate_options_map(int argc, char** argv)
 {
   std::unordered_map<std::string, std::string> result;
   // Using 1 helps skip the name of the application
   for (int i = 1; i < argc; i++) {
-    std::string option {argv[i]}; // NOLINT
+    std::string option{ argv[i] }; // NOLINT
     auto parts = split(option, "=");
     if (parts.size() < 2) {
       throw std::runtime_error(std::format("Wrong option: {}", option));
@@ -37,11 +37,11 @@ T
 parse_number(const std::string& option)
 {
   T result = 0;
-  std::istringstream input_stream {option};
+  std::istringstream input_stream{ option };
   input_stream.exceptions(std::ifstream::failbit);
   try {
     input_stream >> result;
-  } catch(const std::ios_base::failure& exception) {
+  } catch (const std::ios_base::failure& exception) {
     throw std::runtime_error(std::format("Wrong option value: {}", option));
   }
   return htons(result);
@@ -65,7 +65,7 @@ get_address(const RawOptionMappting& options, const std::string& option_name)
   if (error <= 0) {
     throw std::runtime_error(std::format("Wrong address: {}", option));
   }
-  return {result};
+  return { result };
 }
 
 std::optional<uint16_t>
@@ -114,11 +114,13 @@ check_option_names(const RawOptionMappting& options)
   });
 }
 
-void check_required_options(const RawOptionMappting& options) {
+void
+check_required_options(const RawOptionMappting& options)
+{
   for (auto& required_option : REQUIRED_OPTIONS) {
     if (!options.contains(required_option)) {
-      throw std::runtime_error(std::format("Option \"{}\" is required",
-                                           required_option));
+      throw std::runtime_error(
+        std::format("Option \"{}\" is required", required_option));
     }
   }
 }
@@ -128,14 +130,14 @@ get_interface_index(const RawOptionMappting& options,
                     const std::string& option_name)
 {
   if (!options.contains(option_name)) {
-    throw std::runtime_error(std::format("Can't find an interface option: {}",
-                                         option_name));
+    throw std::runtime_error(
+      std::format("Can't find an interface option: {}", option_name));
   }
   auto interface_name = options.at(option_name);
   auto result = if_nametoindex(interface_name.c_str());
   if (result == 0) {
-    throw std::runtime_error(std::format("Can't find an interface by name: {}",
-                                         interface_name));
+    throw std::runtime_error(
+      std::format("Can't find an interface by name: {}", interface_name));
   }
   return result;
 }
@@ -153,15 +155,15 @@ get_speed_format(const RawOptionMappting& options,
   } else if (value == SPEED_FORMAT_BYTE) {
     return SpeedFormatEnum::BYTE;
   }
-  throw std::runtime_error(std::format(
-        "Unknown speed format: \"{}\". Please, use {} or {}",
-        value,
-        SPEED_FORMAT_BIT,
-        SPEED_FORMAT_BYTE));
+  throw std::runtime_error(
+    std::format("Unknown speed format: \"{}\". Please, use {} or {}",
+                value,
+                SPEED_FORMAT_BIT,
+                SPEED_FORMAT_BYTE));
 }
 
 CmdLineOptions
-parse_cmdline_options(int argc, char **argv)
+parse_cmdline_options(int argc, char** argv)
 {
   auto options = populate_options_map(argc, argv);
   check_option_names(options);
@@ -178,6 +180,8 @@ parse_cmdline_options(int argc, char **argv)
   };
 }
 
-void print_help() {
+void
+print_help()
+{
   print(HELP_TEXT);
 }

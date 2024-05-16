@@ -3,19 +3,23 @@
 
 const __u32 KEY = 0;
 
+// clang-format off
 const unsigned char FILTER_SRC_ADDRESS = 1u << 0;
 const unsigned char FILTER_DST_ADDRESS = 1u << 1;
 const unsigned char FILTER_SRC_PORT    = 1u << 2;
 const unsigned char FILTER_DST_PORT    = 1u << 3;
 const unsigned char FILTER_TCP         = 1u << 4;
 const unsigned char FILTER_UDP         = 1u << 5;
+// clang-format on
 
-struct StatData {
-	__u64 received_packets;
-	__u64 received_bytes;
+struct StatData
+{
+  __u64 received_packets;
+  __u64 received_bytes;
 };
 
-struct ConfigData {
+struct ConfigData
+{
   __u32 src_address;
   __u32 dst_address;
   __u16 src_port;
@@ -23,6 +27,7 @@ struct ConfigData {
   __u8 filter_flags;
 };
 
-struct BpfFileDescriptor {
+struct BpfFileDescriptor
+{
   int descriptor;
 };

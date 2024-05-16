@@ -1,8 +1,8 @@
 #pragma once
 
-class Screen {
+class Screen
+{
 public:
-
   /**
    * Stores a current terminal state and creates
    * an alternative buffer for subsequent output.

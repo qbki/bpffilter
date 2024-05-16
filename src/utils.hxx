@@ -174,4 +174,5 @@ format_ipv4_address(uint32_t value);
  * @return An array of StatData items based on
  *         the quantity of CPUs in a system.
  */
-std::vector<StatData> generate_stats_per_cpu_array();
+std::vector<StatData>
+generate_stats_per_cpu_array();
