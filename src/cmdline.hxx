@@ -74,5 +74,16 @@ struct CmdLineOptions {
   unsigned int interface_index {0};
 };
 
+/**
+ * Prints a help text to terminal.
+ */
 void print_help();
+
+/**
+ * Parses command line arguments and returns a structure
+ * with configuration of the application.
+ * @param argc Quantity of arguments.
+ * @param argv An array of arguments.
+ * @return A structure with the application configuration.
+ */
 CmdLineOptions parse_cmdline_options(int argc, char **argv);

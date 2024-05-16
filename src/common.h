@@ -22,3 +22,7 @@ struct ConfigData {
   __u16 dst_port;
   __u8 filter_flags;
 };
+
+struct BpfFileDescriptor {
+  int descriptor;
+};

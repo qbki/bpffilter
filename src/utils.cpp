@@ -10,6 +10,11 @@ const static unsigned long GB = 1024 * 1024 * 1024;
 const static unsigned long MB = 1024 * 1024;
 const static unsigned long KB = 1024;
 
+void
+flush() {
+  std::cout << std::flush;
+}
+
 std::vector<std::string>
 split(const std::string& value, const std::string& delimiter)
 {

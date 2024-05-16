@@ -43,10 +43,11 @@ add_custom_target(dummy_target ALL
 )
 
 add_executable(${PROJECT_NAME}
-  "${CMAKE_SOURCE_DIR}/src/main.cpp"
-  "${CMAKE_SOURCE_DIR}/src/utils.cpp"
-  "${CMAKE_SOURCE_DIR}/src/cmdline.cpp"
   "${CMAKE_SOURCE_DIR}/src/bpf_program.cpp"
+  "${CMAKE_SOURCE_DIR}/src/cmdline.cpp"
+  "${CMAKE_SOURCE_DIR}/src/main.cpp"
+  "${CMAKE_SOURCE_DIR}/src/screen.cpp"
+  "${CMAKE_SOURCE_DIR}/src/utils.cpp"
   "${CMAKE_SOURCE_DIR}/src/xdp_program.cpp"
 )
 target_link_libraries(${PROJECT_NAME} xdp bpf elf zstd z)

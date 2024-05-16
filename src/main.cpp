@@ -20,6 +20,7 @@
 #include "common.h"
 #include "main.skel.h"
 #include "sampler.hxx"
+#include "screen.hxx"
 #include "utils.hxx"
 #include "xdp_program.hxx"
 
@@ -34,10 +35,33 @@ static volatile sig_atomic_t IS_RUNNING = 1; // NOLINT
 const std::string XDP_CONFIG_MAP = "xdp_config_map";
 const std::string XDP_STATS_MAP = "xdp_stats_map";
 
-StatData get_stats(XdpProgram::BpfFileDescriptor fd);
+/**
+ * Returns statistics from the kernel program.
+ * @param fd A BPF file descriptor.
+ * @return Quantity of bytes and packages since start of application.
+ */
+StatData get_stats(BpfFileDescriptor fd);
+
+/**
+ * Performs initialization of BPF maps which are used
+ * by kernel and user programs.
+ * @param program An XDP program.
+ * @param options Command line options.
+ */
 void configure_kernel_program(XdpProgram& program,
                               const CmdLineOptions& options);
+
+/**
+ * A callback for handling of the "Ctrl+C" keyboard shortcut (SIGINT).
+ * @param _ Unused.
+ */
 void finish_application(int);
+
+/**
+ * Performs an infinite loop with printing statistics once per second.
+ * @param program An XDP program.
+ * @param options Command line options.
+ */
 void run_polling(XdpProgram& program, const CmdLineOptions& options);
 
 int
@@ -73,7 +97,7 @@ finish_application(int)
 }
 
 StatData
-get_stats(XdpProgram::BpfFileDescriptor fd)
+get_stats(BpfFileDescriptor fd)
 {
   auto stats_per_cpu = generate_stats_per_cpu_array();
   auto error = bpf_map_lookup_elem(fd.descriptor, &KEY, stats_per_cpu.data());
@@ -133,8 +157,7 @@ run_polling(XdpProgram& program, const CmdLineOptions& options)
     return value ? "yes" : "no";
   };
 
-  // I hope you have xterm
-  print("\033[?1049h", false); // Goes to an alternative buffer
+  Screen screen;
   while (IS_RUNNING) {
     // Keep the sleep_for function up. It helps gather statistics before first
     // appearance. In the other case you will get default values and wrong
@@ -144,8 +167,8 @@ run_polling(XdpProgram& program, const CmdLineOptions& options)
     bytes_sampler.sample(stats_data.received_bytes);
     auto elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(
         std::chrono::system_clock::now() - start_time).count();
-    print("\033[2J", false); // Clears screen
-    print("\033[H", false); // Moves a cursor to the home position
+    screen.clear()
+          .go_home();
     print(std::format("Source: {}:{}",
                       format_address(options.src_address),
                       format_port(options.src_port)));
@@ -166,6 +189,6 @@ run_polling(XdpProgram& program, const CmdLineOptions& options)
     print(std::format("Min speed: {}", format_speed(bytes_sampler.min(), 1)));
     print(std::format("Max speed (peak): {}",
                       format_speed(bytes_sampler.max(), 1)));
+    flush();
   }
-  print("\033[?1049l", false); // Returns from the alternative buffer
 }
