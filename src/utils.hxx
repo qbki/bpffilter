@@ -4,7 +4,7 @@
 #include <optional>
 #include <vector>
 
-#include "common.h"
+#include "kernel/common.h"
 
 /**
  * Prints "value" to the standard output.

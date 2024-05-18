@@ -59,6 +59,7 @@ Install dependencies:
 ```sh
 $ sudo apt-get install \
     cmake \
+    git \
     make \
     sudo \
     clang-17 \

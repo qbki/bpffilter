@@ -2,7 +2,7 @@
 #include <string>
 #include <xdp/libxdp.h>
 
-#include "common.h"
+#include "kernel/common.h"
 
 class XdpProgram
 {

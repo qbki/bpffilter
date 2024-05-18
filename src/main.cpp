@@ -6,6 +6,7 @@
 #include <exception>
 #include <fcntl.h>
 #include <format>
+#include <netinet/in.h>
 #include <optional>
 #include <stdexcept>
 #include <sys/resource.h>
@@ -16,7 +17,7 @@
 
 #include "bpf_program.hxx"
 #include "cmdline.hxx"
-#include "common.h"
+#include "kernel/common.h"
 #include "main.skel.h"
 #include "sampler.hxx"
 #include "screen.hxx"
@@ -151,7 +152,7 @@ run_polling(XdpProgram& program, const CmdLineOptions& options)
     return value.has_value() ? format_ipv4_address(value.value()) : "any";
   };
   auto format_port = [](const std::optional<uint16_t>& value) {
-    return value.has_value() ? std::to_string(value.value()) : "any";
+    return value.has_value() ? std::to_string(ntohs(value.value())) : "any";
   };
   auto format_protocol = [](bool value) { return value ? "yes" : "no"; };
 

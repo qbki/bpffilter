@@ -2,16 +2,26 @@ cmake_minimum_required(VERSION 3.27)
 
 project(bpffilter VERSION 0.0.1)
 
-set(CMAKE_C_COMPILER "clang")
+# begin : Fetch Catch2 - a unit test library
+# Keep it above compiler flags, or you stuck in an
+# infinite loop of cmake's reconfiguration.
+include(FetchContent)
+FetchContent_Declare(
+  Catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        v3.4.0
+)
+FetchContent_MakeAvailable(Catch2)
+# end
+
+set(CMAKE_C_COMPILER "/usr/bin/clang")
 set(CMAKE_C_OUTPUT_EXTENSION_REPLACE 1)
 set(CMAKE_C_OUTPUT_EXTENSION ".o")
-set(CMAKE_CXX_COMPILER "clang++")
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 set(CMAKE_CXX_FLAGS_INIT "-Wall -std=c++20")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/include")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
-
-include_directories(SYSTEM ${GENERATED_INCLUDE_DIR})
 
 function(add_flag target flag)
   target_compile_options(${target} PRIVATE ${flag})
@@ -27,9 +37,11 @@ endfunction()
 
 file(MAKE_DIRECTORY ${GENERATED_INCLUDE_DIR})
 
-add_library(MAIN_BPF OBJECT "${CMAKE_SOURCE_DIR}/src/main.bpf.c")
-add_flag(MAIN_BPF "-g") # Required. You can't use BPF maps without it.
-add_flag(MAIN_BPF "-O2") # Required. Invalid opcodes are generated without it.
+add_library(MAIN_BPF OBJECT "${CMAKE_SOURCE_DIR}/src/kernel/main.bpf.c")
+# Required. You can't use BPF maps without it.
+add_flag(MAIN_BPF "-g")
+# Required. Invalid opcodes are generated without it.
+add_flag(MAIN_BPF "-O2")
 # begin : this is one argument, add_flag has a naive implementation...
 add_flag(MAIN_BPF "-target")
 add_flag(MAIN_BPF "bpf")
@@ -42,6 +54,7 @@ add_custom_target(dummy_target ALL
   VERBATIM
 )
 
+include_directories(SYSTEM ${GENERATED_INCLUDE_DIR})
 add_executable(${PROJECT_NAME}
   "${CMAKE_SOURCE_DIR}/src/bpf_program.cpp"
   "${CMAKE_SOURCE_DIR}/src/cmdline.cpp"
@@ -52,6 +65,14 @@ add_executable(${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME} xdp bpf elf zstd z)
 target_link_options(${PROJECT_NAME} PRIVATE -stdlib=libstdc++ -static)
+
+add_executable(tests
+  "${CMAKE_SOURCE_DIR}/src/kernel/tests/collect_addresses.cpp"
+  "${CMAKE_SOURCE_DIR}/src/kernel/tests/collect_ports.cpp"
+  "${CMAKE_SOURCE_DIR}/src/kernel/tests/collect_proto.cpp"
+  "${CMAKE_SOURCE_DIR}/src/kernel/tests/remove_bits.cpp"
+)
+target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
 
 add_common_flags(${PROJECT_NAME})
 add_flag(${PROJECT_NAME} "-std=c++20")
