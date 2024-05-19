@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.27)
 
-project(bpffilter VERSION 0.0.1)
+project(bpffilter VERSION 1.0.0)
 
 # begin : Fetch Catch2 - a unit test library
 # Keep it above compiler flags, or you stuck in an
@@ -76,3 +76,10 @@ target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
 
 add_common_flags(${PROJECT_NAME})
 add_flag(${PROJECT_NAME} "-std=c++20")
+
+# Packing
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+set(CPACK_GENERATOR "ZIP")
+set(CPACK_OUTPUT_FILE_PREFIX ${CMAKE_SOURCE_DIR}/build/pack)
+include(CPack)
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
