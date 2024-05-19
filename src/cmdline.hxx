@@ -72,7 +72,7 @@ struct CmdLineOptions
 };
 
 /**
- * Prints a help text to terminal.
+ * Prints a help text to a terminal.
  */
 void
 print_help();
