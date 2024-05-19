@@ -28,8 +28,6 @@ struct
   __uint(max_entries, 1);
 } xdp_config_map SEC(".maps"); // NOLINT
 
-static __u64 START_TIME = 0; // NOLINT
-
 SEC("xdp")
 int
 xdp_prog(struct xdp_md* ctx)
@@ -38,7 +36,7 @@ xdp_prog(struct xdp_md* ctx)
   void* data = (void*)(long)ctx->data;
 
   struct ethhdr* eth_header = data;
-  if (eth_header + 1 > data_end) { // NOLINT
+  if (eth_header + 1 > (struct ethhdr*)data_end) {
     return XDP_PASS;
   }
 
@@ -63,7 +61,7 @@ xdp_prog(struct xdp_md* ctx)
       collect_proto(configs, ip_header, &expected_filter_flags);
     if (ip_header->protocol == IPPROTO_TCP) {
       struct tcphdr* tcp_header = proto;
-      if (tcp_header + 1 > (struct tcphdr*)data_end) { // NOLINT
+      if (tcp_header + 1 > (struct tcphdr*)data_end) {
         return XDP_PASS;
       }
       __u16 sport = (__u16)tcp_header->source;
@@ -71,7 +69,7 @@ xdp_prog(struct xdp_md* ctx)
       current_filter_flags |= collect_ports(configs, sport, dport);
     } else if (ip_header->protocol == IPPROTO_UDP) {
       struct udphdr* udp_header = proto;
-      if (udp_header + 1 > (struct udphdr*)data_end) { // NOLINT
+      if (udp_header + 1 > (struct udphdr*)data_end) {
         return XDP_PASS;
       }
       __u16 sport = (__u16)udp_header->source;

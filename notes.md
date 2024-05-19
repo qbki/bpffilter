@@ -28,3 +28,8 @@ Netcat client:
 nc -v localhost 9000
 nc -v localhost 9000 -p 9002 # for a source port
 ```
+
+Big data
+```bash
+dd if=/dev/zero count=1K bs=1M | nc -vvn 192.168.1.88 20000 -p 10000
+```

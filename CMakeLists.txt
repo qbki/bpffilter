@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.27)
 
-project(bpffilter VERSION 1.0.0)
+project(bpffilter VERSION 1.0.1)
 
 # begin : Fetch Catch2 - a unit test library
 # Keep it above compiler flags, or you stuck in an
@@ -15,10 +15,11 @@ FetchContent_MakeAvailable(Catch2)
 # end
 
 set(CMAKE_C_COMPILER "/usr/bin/clang")
+set(CMAKE_CXX_FLAGS_INIT "-std=gnu17")
 set(CMAKE_C_OUTPUT_EXTENSION_REPLACE 1)
 set(CMAKE_C_OUTPUT_EXTENSION ".o")
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
-set(CMAKE_CXX_FLAGS_INIT "-Wall -std=c++20")
+set(CMAKE_CXX_FLAGS_INIT "-std=c++20")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/include")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
@@ -28,11 +29,8 @@ function(add_flag target flag)
 endfunction()
 
 function(add_common_flags target)
-  add_flag(${target} "-O2")
   add_flag(${target} "-Wall")
   add_flag(${target} "-Wextra")
-  add_flag(${target} "-Wpedantic")
-  add_flag(${target} "-pedantic-errors")
 endfunction()
 
 file(MAKE_DIRECTORY ${GENERATED_INCLUDE_DIR})
@@ -47,6 +45,7 @@ add_flag(MAIN_BPF "-target")
 add_flag(MAIN_BPF "bpf")
 # end
 add_flag(MAIN_BPF "-D__TARGET_ARCH_x86_64")
+add_common_flags(MAIN_BPF)
 
 add_custom_target(dummy_target ALL
   COMMAND ${CMAKE_COMMAND} -E env sh -c
@@ -75,6 +74,8 @@ add_executable(tests
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
 
 add_common_flags(${PROJECT_NAME})
+add_flag(${PROJECT_NAME} "-Wpedantic")
+add_flag(${PROJECT_NAME} "-pedantic-errors")
 add_flag(${PROJECT_NAME} "-std=c++20")
 
 # Packing
