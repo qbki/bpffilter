@@ -1,0 +1,17 @@
+packages:
+  - nginx
+  - nodejs
+  - cmake
+  - make
+  - clang-17
+  - gcc-multilib
+  - libbpf-dev
+  - libxdp-dev
+  - linux-tools-common
+  - linux-tools-generic
+  - linux-headers-6.5.0-35-generic
+
+bootcmd:
+  - ln -s /usr/bin/clang-17 /usr/bin/clang
+  - ln -s /usr/bin/clang++-17 /usr/bin/clang++
+  - ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/asm

@@ -1,6 +1,7 @@
 /CMakeUserPresets.json
 
 /build
+/build-vm
 /build-docker
 
 /.cache

@@ -52,6 +52,32 @@ Max speed (peak): 19.50Mibit/s
 
 ## Build
 
+### Multipass
+
+You can use [multipass](https://multipass.run/install) utility. It's a
+lightweight manager for virtual machines that use Ubuntu's pre-built images.
+
+For initialization of an instance:
+```sh
+& multipass launch 23.10 --mount .:/home/ubuntu/project --cloud-init ./cloud-config.yaml --name bpffilter
+```
+
+To build the application:
+```sh
+& multipass exec bpffilter -- sh /home/ubuntu/project/build-vm.sh
+```
+
+To stop the virtual machine and free RAM:
+```sh
+multipass stop bpffilter
+```
+
+To clear a storage space (also helpful when launch command was not successful):
+```sh
+multipass delete bpffilter
+multipass purge
+```
+
 ### Compilation (Ubuntu 23.10)
 
 Install dependencies:
